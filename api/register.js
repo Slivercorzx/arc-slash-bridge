@@ -1,6 +1,9 @@
+// api/register.js  — ชั่วคราวไว้สมัคร Slash Commands แล้วลบทีหลัง
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
-  if (req.headers['x-secret'] !== process.env.REGISTER_SECRET) return res.status(403).end();
+  const secret = req.headers['x-secret'] || req.query.secret;
+  if (secret !== process.env.REGISTER_SECRET) return res.status(403).send('forbidden');
+
+  if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).send('method not allowed');
 
   const defs = [
     { name:'item', description:'ค้นหาไอเท็ม', type:1,
@@ -12,6 +15,7 @@ export default async function handler(req, res) {
   ];
 
   const url = `https://discord.com/api/v10/applications/${process.env.DISCORD_APPLICATION_ID}/guilds/${process.env.DISCORD_GUILD_ID}/commands`;
+
   const r = await fetch(url, {
     method: 'PUT',
     headers: {
@@ -21,6 +25,7 @@ export default async function handler(req, res) {
     },
     body: JSON.stringify(defs)
   });
-  const text = await r.text();
-  res.status(r.status).send(text);
+
+  const txt = await r.text();
+  res.status(r.status).send(txt);
 }
